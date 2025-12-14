@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update transaction timeout to check time since submission or when transaction was last seen on network ([#7464](https://github.com/MetaMask/core/pull/7464))
+  - Uses `blockTime` from `acceleratedPolling` feature flag.
+
 ## [62.7.0]
 
 ### Added
