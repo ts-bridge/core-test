@@ -163,10 +163,10 @@ jobs:
     needs:
       - all-jobs-complete
       - check-skip-merge-queue
-    env:
-      PASSED: ${{ needs.all-jobs-complete.outputs.passed == 'true' || needs.check-skip-merge-queue.outputs.skip-merge-queue == 'true' }}
     steps:
       - name: Check that all jobs have passed
+        env:
+          PASSED: ${{ needs.all-jobs-complete.outputs.passed == 'true' || needs.check-skip-merge-queue.outputs.skip-merge-queue == 'true' }}
         run: |
           if [[ "$PASSED" != "true" ]]; then
             exit 1
