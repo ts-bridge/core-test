@@ -17,6 +17,9 @@ jobs:
     outputs:
       skip-merge-queue: ${{ steps.check-skip-merge-queue.outputs.up-to-date }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        if: github.event_name == 'merge_group'
       - id: check-skip-merge-queue
         if: github.event_name == 'merge_group'
         uses: ./.github/actions/check-merge-queue
@@ -160,12 +163,11 @@ jobs:
     needs:
       - all-jobs-complete
       - check-skip-merge-queue
-    env:
-      PASSED: ${{ needs.all-jobs-complete.outputs.passed == 'true' || needs.check-skip-merge-queue.outputs.skip-merge-queue == 'true' }}
     steps:
       - name: Check that all jobs have passed
+        env:
+          PASSED: ${{ needs.all-jobs-complete.outputs.passed == 'true' || needs.check-skip-merge-queue.outputs.skip-merge-queue == 'true' }}
         run: |
-          passed="${{ needs.all-jobs-complete.outputs.passed }}"
-          if [[ $passed != "true" ]]; then
+          if [[ "$PASSED" != "true" ]]; then
             exit 1
           fi
