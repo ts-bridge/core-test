@@ -17,6 +17,9 @@ jobs:
     outputs:
       skip-merge-queue: ${{ steps.check-skip-merge-queue.outputs.up-to-date }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        if: github.event_name == 'merge_group'
       - id: check-skip-merge-queue
         if: github.event_name == 'merge_group'
         uses: ./.github/actions/check-merge-queue
