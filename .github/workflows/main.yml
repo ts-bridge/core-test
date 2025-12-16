@@ -28,10 +28,6 @@ jobs:
           base-ref: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set skip-merge-queue output to false
-        if: github.event_name != 'merge_group'
-        run: echo "skip-merge-queue=false" >> "$GITHUB_OUTPUT"
-
   check-workflows:
     name: Check workflows
     needs:
