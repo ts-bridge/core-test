@@ -168,7 +168,6 @@ jobs:
     steps:
       - name: Check that all jobs have passed
         run: |
-          passed="$PASSED"
-          if [[ $passed != "true" ]]; then
+          if [[ "$PASSED" != "true" ]]; then
             exit 1
           fi
