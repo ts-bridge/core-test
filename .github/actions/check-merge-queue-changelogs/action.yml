@@ -5,7 +5,8 @@ description: Check if the changelog was incorrectly merged in a merge queue
 inputs:
   github-token:
     description: The GitHub token to use for authentication.
-    required: true
+    required: false
+    default: ${{ github.token }}
 
 runs:
   using: composite
