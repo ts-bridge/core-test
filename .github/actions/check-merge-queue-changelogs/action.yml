@@ -19,7 +19,7 @@ runs:
       id: pr-number
       uses: actions/github-script@v8
       env:
-        HEAD_REF: ${{ inputs.head-ref }}
+        HEAD_REF: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
       with:
         github-token: ${{ inputs.github-token }}
         script: |
