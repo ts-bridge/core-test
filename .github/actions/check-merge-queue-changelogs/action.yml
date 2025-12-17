@@ -84,7 +84,10 @@ runs:
 
         echo "Comparing changes between origin/$TARGET_REF and origin/$PR_BRANCH"
 
-        UPDATED_CHANGELOGS=$(git diff --name-only "origin/$TARGET_REF..origin/$PR_BRANCH" | grep -E 'CHANGELOG\.md$' || true)
+        git fetch origin "$TARGET_REF"
+        git fetch origin "$PR_BRANCH"
+
+        UPDATED_CHANGELOGS=$(git diff --name-only "origin/$TARGET_REF" "origin/$PR_BRANCH" | grep -E 'CHANGELOG\.md$' || true)
 
         echo "Updated changelogs: $UPDATED_CHANGELOGS"
 
