@@ -55,26 +55,10 @@ runs:
         BRANCH=$(gh api "/repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq=.head.ref)
         echo "pr-branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
-    - name: Get target reference
-      id: get-target
-      shell: bash
-      env:
-        EVENT_NAME: ${{ github.event_name }}
-      run: |
-        if [ "$EVENT_NAME" = "pull_request" ]; then
-          echo "target=$GITHUB_HEAD_REF" >> "$GITHUB_OUTPUT"
-        elif [ "$EVENT_NAME" = "merge_group" ]; then
-          echo "target=$(git rev-parse HEAD^)" >> "$GITHUB_OUTPUT"
-        else
-          echo "::error::This action only supports \`pull_request\` and \`merge_group\` events."
-          exit 1
-        fi
-
     - name: Check changelog changes
       id: changelog-check
       shell: bash
       env:
-        TARGET_REF: ${{ steps.get-target.outputs.target }}
         BASE_REF: ${{ inputs.base-ref }}
         PR_BRANCH: ${{ steps.pr-branch.outputs.pr-branch }}
         REPOSITORY: ${{ github.repository }}
@@ -82,10 +66,10 @@ runs:
       run: |
         set -euo pipefail
 
+        TARGET_REF=$(git merge-base "origin/$BASE_REF" "origin/$PR_BRANCH")
         echo "Comparing changes between $TARGET_REF and origin/$PR_BRANCH"
 
         git fetch origin "$TARGET_REF"
-        git fetch origin "$PR_BRANCH"
 
         UPDATED_CHANGELOGS=$(git diff --name-only "$TARGET_REF" "origin/$PR_BRANCH" | grep -E 'CHANGELOG\.md$' || true)
 
