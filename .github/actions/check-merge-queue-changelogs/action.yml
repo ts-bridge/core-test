@@ -66,6 +66,7 @@ runs:
       run: |
         set -euo pipefail
 
+        git fetch origin "$BASE_REF"
         TARGET_REF=$(git merge-base "$BASE_REF" "origin/$PR_BRANCH")
         echo "Comparing changes between $TARGET_REF and origin/$PR_BRANCH"
 
