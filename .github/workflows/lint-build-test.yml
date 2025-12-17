@@ -82,7 +82,7 @@ jobs:
         uses: ./.github/actions/check-merge-queue-changelogs
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-ref: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref }}
+          base-ref: main
           head-ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
 
   build:
