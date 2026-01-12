@@ -1,38 +1,45 @@
-name: Check merge queue
+name: Check skip merge queue
 description: Check whether a pull request can skip the merge queue when it's
   up-to-date with the base branch.
 
+  This action determines if the pull request is the first in the merge queue
+  and whether it is up-to-date with the base branch. If both conditions are
+  met, the action outputs that the pull request can skip the merge queue.
+  Actual skipping of the merge queue must be handled separately, since GitHub
+  Actions cannot modify the merge queue behaviour directly.
+
+  This action should be used in workflows triggered by `merge_group` events.
+
 inputs:
   head-ref:
-    description: The name of the head ref (the pull request branch).
+    description: The name of the head ref (the pull request branch). Defaults
+      to the head ref of the merge group event.
     required: true
     default: ${{ github.event.merge_group.head_ref }}
 
   base-ref:
-    description: The name of the base ref (e.g., main, master).
+    description: The name of the base ref (e.g., main, master). Defaults to
+      main.
     required: true
     default: main
 
   github-token:
-    description: The GitHub token to use for authentication.
+    description: The GitHub token to use for authentication. Defaults to the
+      standard GITHUB_TOKEN.
     required: true
     default: ${{ github.token }}
 
 outputs:
   up-to-date:
-    value: ${{ steps.up-to-date.outputs.up-to-date }}
+    value: ${{ steps.up-to-date.outputs.up-to-date || 'false' }}
     description: Whether the pull request is up-to-date with the base branch
       and is first in the merge queue, allowing it to skip the merge queue.
 
 runs:
   using: composite
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-
     - name: Get pull request details
+      continue-on-error: true
       id: pr-details
       uses: actions/github-script@v8
       env:
@@ -76,16 +83,34 @@ runs:
           core.setOutput('merge-queue-position', position);
 
     - name: Check if pull request is up-to-date with base branch
+      continue-on-error: true
       id: up-to-date
-      shell: bash
+      uses: actions/github-script@v8
       env:
         BASE_REF: ${{ inputs.base-ref }}
         PR_BRANCH: ${{ steps.pr-details.outputs.pr-branch }}
         MERGE_QUEUE_POSITION: ${{ steps.pr-details.outputs.merge-queue-position }}
-      run: |
-        set -euo pipefail
-        if git merge-base --is-ancestor "origin/${BASE_REF}" "origin/${PR_BRANCH}" && [ "${MERGE_QUEUE_POSITION}" -eq 1 ]; then
-          echo "up-to-date=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "up-to-date=false" >> "$GITHUB_OUTPUT"
-        fi
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const { BASE_REF, PR_BRANCH, MERGE_QUEUE_POSITION } = process.env;
+
+          if (parseInt(MERGE_QUEUE_POSITION, 10) !== 1) {
+            core.info(`Pull request is not first in the merge queue (position: ${MERGE_QUEUE_POSITION}).`);
+            core.setOutput('up-to-date', 'false');
+            return;
+          }
+
+          const comparison = await github.repos.compareCommitsWithBasehead({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            basehead: `${BASE_REF}...${PR_BRANCH}`,
+          });
+
+          if (comparison.status === 'identical' || comparison.status === 'ahead') {
+            core.info(`Pull request branch "${PR_BRANCH}" is up-to-date with base branch "${BASE_REF}".`);
+            core.setOutput('up-to-date', 'true');
+          } else {
+            core.info(`Pull request branch "${PR_BRANCH}" is not up-to-date with base branch "${BASE_REF}".`);
+            core.setOutput('up-to-date', 'false');
+          }
